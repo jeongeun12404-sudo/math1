@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>무리함수로 탐구하는 흡연 기간과 예상 수명</title>
+<style>
+:root{color-scheme:light;--ink:#15243a;--muted:#56687f;--blue:#2563eb;--red:#ed5965;--grid:#e6edf5;--paper:#fff;--bg:#f4f7fc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
+main{max-width:1100px;margin:0 auto;padding:30px 20px 40px}header h1{font-size:clamp(25px,3.3vw,38px);margin:0 0 10px}header p{margin:0;color:var(--muted);line-height:1.75}
+.card{background:var(--paper);border:1px solid #e2e9f3;border-radius:22px;padding:24px;box-shadow:0 9px 30px rgba(29,55,93,.045)}.top{margin:24px 0 18px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{border-radius:15px;background:#f3f7fc;padding:16px}.stat span{display:block;color:var(--muted);font-size:14px}.stat strong{display:block;font-size:clamp(23px,3vw,32px);margin-top:5px;white-space:nowrap}.stat em{font-style:normal;color:var(--muted);font-size:13px}
+.graph-wrap{position:relative;width:100%;}svg{display:block;width:100%;height:auto;overflow:visible}#curve{stroke:var(--red);stroke-width:4.5;fill:none;stroke-linecap:round}#traced{stroke:#ff9b9f;stroke-width:8;fill:none;stroke-linecap:round;opacity:.44}#baseline{stroke:var(--blue);stroke-width:2.5;stroke-dasharray:9 7}#guideX,#guideY{stroke:#8a9aaf;stroke-width:1.8;stroke-dasharray:5 6}.tick{fill:#61738a;font-size:14px}.axis-name{fill:#30465d;font-weight:700;font-size:17px}.gridline{stroke:var(--grid);stroke-width:1}.legend{display:flex;flex-wrap:wrap;gap:18px;margin:2px 0 16px;color:#42566c;font-size:14px}.key{display:inline-block;width:23px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}.key.red{background:var(--red)}.key.blue{background:var(--blue)}.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:14px}.slider-label{display:flex;justify-content:space-between;gap:10px;font-weight:700}.range-box{flex:1;min-width:210px}input[type=range]{width:100%;accent-color:var(--red);cursor:pointer;margin:12px 0 1px}button{border:0;border-radius:12px;padding:12px 17px;font:inherit;font-weight:700;cursor:pointer}#play{background:var(--blue);color:white;min-width:110px}#reset{background:#eaf0f9;color:#233e62}.formula{padding:17px 20px;background:#edf4ff;border-radius:14px;margin-top:19px;line-height:1.8}.formula strong{color:#173c9a}.note{color:#5d6980;font-size:14px;line-height:1.8;margin-top:16px}.footer{margin-top:15px;line-height:1.8;font-size:14px;color:#54657a}.pill{display:inline-block;background:#fff1f2;color:#ab2c40;border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;vertical-align:middle;margin-right:6px}
+@media(max-width:650px){main{padding:20px 12px}.card{padding:15px;border-radius:16px}.stats{grid-template-columns:1fr}.stat{padding:12px}.stat strong{font-size:24px}.tick{font-size:16px}.axis-name{font-size:18px}.controls{align-items:stretch}button{flex:1}}
+</style>
+</head>
+<body><main>
+<header><h1>🚭 무리함수와 흡연 기간의 관계</h1><p>흡연 기간이 길어질수록 가상의 예상 수명은 어떻게 변할까요?<br>슬라이더를 움직이거나 애니메이션을 재생하며 <b>무리함수의 감소 그래프</b>를 관찰해 보세요.</p></header>
+<section class="card top" aria-label="결과 요약"><div class="stats">
+<div class="stat"><span>흡연 기간 (x)</span><strong id="yearsNum">0년</strong><em>0~40년 사이에서 조절</em></div>
+<div class="stat"><span>모형상 예상 수명 (y)</span><strong id="ageNum">85.0세</strong><em>가상 수학 모형의 출력값</em></div>
+<div class="stat"><span>모형상 기준값 대비 차이</span><strong id="deltaNum">0.0년</strong><em>85세 기준 · 실제 통계 아님</em></div>
+</div></section>
+<section class="card">
+<div class="legend"><span><i class="key red"></i>가상 무리함수 y = 85 − 2√x</span><span><i class="key blue"></i>가정한 기준 수명 85세</span></div>
+<div class="graph-wrap">
+<svg id="plot" viewBox="0 0 950 520" role="img" aria-label="x축은 흡연 기간 0에서 40년, y축은 가상 예상 수명 70에서 90세인 움직이는 무리함수 그래프">
+<g id="grid"></g><line id="baseline"/><path id="curve"/><path id="traced"/><line id="guideX"/><line id="guideY"/><circle id="dotHalo" r="15" fill="#ed5965" opacity=".15"/><circle id="dot" r="8" fill="#ed5965" stroke="white" stroke-width="3"/><g id="bubble"><rect id="bubbleRect" width="162" height="52" rx="12" fill="#243a57"/><text id="bubbleLabel" x="81" y="22" text-anchor="middle" font-size="16" font-weight="700" fill="white"></text><text id="bubbleSub" x="81" y="42" text-anchor="middle" font-size="13" fill="#dce9fc"></text></g><text class="axis-name" x="490" y="511" text-anchor="middle">흡연 기간 x (년)</text><text class="axis-name" transform="translate(22 260) rotate(-90)" text-anchor="middle">모형상 예상 수명 y (세)</text>
+</svg>
+</div>
+<div class="controls"><div class="range-box"><div class="slider-label"><label for="years">흡연 기간 조절</label><output id="yearsOutput" for="years">0년</output></div><input id="years" type="range" min="0" max="40" step="0.1" value="0" /></div><button id="play" type="button">▶ 재생</button><button id="reset" type="button">↺ 처음으로</button></div>
+<div class="formula"><strong>수학적 가정: y = 85 − 2√x</strong><br>x: 흡연 기간(년), y: 가상의 예상 수명(세). x ≥ 0이며, 이 그림에서는 0 ≤ x ≤ 40을 관찰합니다.<br>√x 앞의 계수가 음수이므로 흡연 기간이 증가할 때 그래프는 감소합니다. 단, 이 식은 <b>수업을 위해 임의로 만든 함수</b>로, 흡연과 실제 수명의 관계를 추정하는 공식이 아닙니다.</div>
+<p class="note"><span class="pill">중요</span>실제 건강 영향은 흡연 시작 연령, 하루 흡연량, 금연 여부, 개인의 건강 상태 등 다양한 요인에 따라 달라집니다. x축의 ‘흡연 기간’만으로 개인의 사망 연령이나 기대수명을 계산할 수 없습니다. 여기서 y축은 <b>현재 나이</b>가 아니라 <b>가상 모형이 표시하는 예상 수명</b>입니다.</p>
+</section>
+<p class="footer">수업 질문: ① 그래프가 감소하는 이유는? ② 10년과 20년의 모형상 수명 차이는? ③ 이 함수를 실제 통계에 그대로 적용하면 안 되는 이유는?</p>
+</main>
+<script>
+(()=>{'use strict';
+ const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+ const L=94,R=911,T=24,B=449,xmax=40,ymin=70,ymax=90;
+ const sx=x=>L+x/xmax*(R-L),sy=y=>B-(y-ymin)/(ymax-ymin)*(B-T);
+ const f=x=>85-2*Math.sqrt(Math.max(0,x));
+ const grid=$('grid');
+ const add=(tag,attrs,text)=>{const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;grid.append(e);return e};
+ for(let x=0;x<=40;x+=5){let a=sx(x);add('line',{x1:a,x2:a,y1:T,y2:B,class:'gridline'});add('text',{x:a,y:B+27,'text-anchor':'middle',class:'tick'},String(x))}
+ for(let y=70;y<=90;y+=5){let a=sy(y);add('line',{x1:L,x2:R,y1:a,y2:a,class:'gridline'});add('text',{x:L-16,y:a+5,'text-anchor':'end',class:'tick'},String(y))}
+ add('line',{x1:L,x2:R,y1:B,y2:B,stroke:'#8396af','stroke-width':2});add('line',{x1:L,x2:L,y1:T,y2:B,stroke:'#8396af','stroke-width':2});
+ const pathUntil=(n)=>{let p='';const steps=Math.max(1,Math.ceil(n*6));for(let i=0;i<=steps;i++){let x=n*i/steps;p+=(i?'L':'M')+sx(x).toFixed(2)+','+sy(f(x)).toFixed(2)+' '}return p};
+ $('curve').setAttribute('d',pathUntil(40));$('baseline').setAttribute('x1',L);$('baseline').setAttribute('x2',R);$('baseline').setAttribute('y1',sy(85));$('baseline').setAttribute('y2',sy(85));
+ let current=0,playing=false,frame=null,lastTime=null;
+ const paint=x=>{current=Math.min(40,Math.max(0,x));const y=f(current),cx=sx(current),cy=sy(y);$('years').value=String(current);$('yearsNum').textContent=current.toFixed(1)+'년';$('yearsOutput').textContent=current.toFixed(1)+'년';$('ageNum').textContent=y.toFixed(1)+'세';$('deltaNum').textContent=(85-y).toFixed(1)+'년';$('dot').setAttribute('cx',cx);$('dot').setAttribute('cy',cy);$('dotHalo').setAttribute('cx',cx);$('dotHalo').setAttribute('cy',cy);$('guideX').setAttribute('x1',cx);$('guideX').setAttribute('x2',cx);$('guideX').setAttribute('y1',cy);$('guideX').setAttribute('y2',B);$('guideY').setAttribute('x1',L);$('guideY').setAttribute('x2',cx);$('guideY').setAttribute('y1',cy);$('guideY').setAttribute('y2',cy);$('traced').setAttribute('d',pathUntil(current));let bx=Math.min(R-164,Math.max(L+5,cx-81)),by=(cy<90?cy+17:cy-74);$('bubble').setAttribute('transform',`translate(${bx} ${by})`);$('bubbleLabel').textContent=current.toFixed(1)+'년 흡연';$('bubbleSub').textContent='모형상 '+y.toFixed(1)+'세'};
+ const stop=()=>{playing=false;lastTime=null;cancelAnimationFrame(frame);$('play').textContent='▶ 재생';$('play').setAttribute('aria-label','애니메이션 재생')};
+ const tick=t=>{if(!playing)return;if(lastTime===null)lastTime=t;const elapsed=Math.min(100,t-lastTime);lastTime=t;paint(current+elapsed/1000*4);if(current>=40){stop();return}frame=requestAnimationFrame(tick)};
+ $('play').addEventListener('click',()=>{if(playing){stop();return}if(current>=40)paint(0);playing=true;$('play').textContent='⏸ 일시정지';$('play').setAttribute('aria-label','애니메이션 일시정지');frame=requestAnimationFrame(tick)});
+ $('years').addEventListener('input',e=>{stop();paint(Number(e.target.value))});$('reset').addEventListener('click',()=>{stop();paint(0)});document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});paint(0);
+})();
+</script>
+</body></html>
